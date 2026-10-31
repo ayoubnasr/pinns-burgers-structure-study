@@ -41,9 +41,7 @@ structure-aware architecture helps.
 
 ## Where this leads
 
-Phase 2 (planned, not yet implemented) compares a standard PINN with a variant whose
-architecture is chosen from the PDE's structure, and checks where in the spectrum each one
-fails. The question this repository answers first is whether the premise is true at all.
+Phase 2 (planned, not yet run) tests the architecture rules above on a PINN: one change at a time, five seeds each, with predictions and pass/fail thresholds written down before any training. See [docs/PHASE2.md](docs/PHASE2.md). The question this repository answers first is whether the premise is true at all.
 
 ## What these results suggest for the architecture
 
