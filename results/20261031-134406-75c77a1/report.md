@@ -51,5 +51,5 @@ Run `20261031-134406-75c77a1` (git `75c77a1`); reference data computed in 115 s,
 | Prediction | Verdict | Evidence |
 |---|---|---|
 | P1 Fourier decay slower for smaller nu | **supported** | slopes at t = 1 from largest to smallest nu: -13.17, -1.98, -1.01 |
-| P2 singular values decay slower for smaller nu | **contradicted** | not increasing as nu decreases: s_r/s_1 at rank 5. at ranks 5, 10, 20 (largest to smallest nu): missing energy 2.06e-08/2.76e-15/6.10e-30; 4.29e-06/2.66e-10/2.29e-18; 5.13e-06/6.01e-09/5.77e-15; s_r/s_1 9.18e-04/2.35e-07/1.22e-14; 4.60e-03/3.94e-05/3.58e-09; 4.43e-03/1.35e-04/1.37e-07 |
+| P2 singular values decay slower for smaller nu | **contradicted** | At rank 5, s_r/s_1 is 9.18e-4, 4.60e-3, 4.43e-3 (largest to smallest nu), so not strictly increasing. s_r/s_1 at ranks 10, 20 does increase. Missing energy at ranks 5, 10, 20 does increase. |
 | P3 more modes needed for smaller nu | **contradicted** | modes needed from largest to smallest nu: tol 0.01: 3, 4, 4; tol 0.001: 4, 6, 7 |

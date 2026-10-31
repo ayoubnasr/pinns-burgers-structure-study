@@ -8,8 +8,8 @@
 How does the structure of a PDE shape a learning method? As a first step, this repo tests the premise on
 Burgers' equation: when viscosity drops and a shock forms, the solution should become harder to represent,
 seen as slower Fourier decay and slower POD singular-value decay. That premise matters because, if it holds,
-any method that builds a solution from smooth or global pieces (Fourier modes, linear bases, and later neural
-networks) is fighting the equation's structure rather than the data's size.
+methods that build a solution from smooth or global pieces (Fourier modes, linear bases) need more of those
+pieces as the front sharpens, and the same question can then be asked of neural networks in a later phase.
 
 ## 2. Hypothesis and predictions
 
@@ -97,9 +97,17 @@ Run `20261031-134406-75c77a1` (git `75c77a1`); reference data computed in 115 s,
 | Prediction | Verdict | Evidence |
 |---|---|---|
 | P1 Fourier decay slower for smaller nu | **supported** | slopes at t = 1 from largest to smallest nu: -13.17, -1.98, -1.01 |
-| P2 singular values decay slower for smaller nu | **contradicted** | not increasing as nu decreases: s_r/s_1 at rank 5. at ranks 5, 10, 20 (largest to smallest nu): missing energy 2.06e-08/2.76e-15/6.10e-30; 4.29e-06/2.66e-10/2.29e-18; 5.13e-06/6.01e-09/5.77e-15; s_r/s_1 9.18e-04/2.35e-07/1.22e-14; 4.60e-03/3.94e-05/3.58e-09; 4.43e-03/1.35e-04/1.37e-07 |
+| P2 singular values decay slower for smaller nu | **contradicted** | At rank 5, s_r/s_1 is 9.18e-4, 4.60e-3, 4.43e-3 (largest to smallest nu), so not strictly increasing. s_r/s_1 at ranks 10, 20 does increase. Missing energy at ranks 5, 10, 20 does increase. |
 | P3 more modes needed for smaller nu | **contradicted** | modes needed from largest to smallest nu: tol 0.01: 3, 4, 4; tol 0.001: 4, 6, 7 |
 <!-- RESULTS:END -->
+
+### Reading the verdicts
+
+P1 held clearly. P2 and P3 held in trend but not under the strict rules fixed beforehand. P2 fails only
+because at rank 5 the two smaller viscosities are nearly equal in s_5/s_1 (4.60e-3 vs 4.43e-3), while
+missing energy and the higher-rank values do increase as nu decreases. P3 fails at tol 0.01 because two
+viscosities tie at 4 modes, while at tol 0.001 the count increases (4, 6, 7). The rules were not changed
+after seeing the data.
 
 ## 6. What this does NOT show
 
@@ -107,6 +115,8 @@ Run `20261031-134406-75c77a1` (git `75c77a1`); reference data computed in 115 s,
   and of a *linear reduced basis* (POD). It says nothing about spectral bias, PINN accuracy or training difficulty.
 - The log-log slopes are fits over one fixed wavenumber window. They are estimates of local decay, not
   asymptotic decay laws, and change if the window changes.
+- Where the spectrum decays exponentially (large nu, early times), a power-law slope such as -13 is only a
+  rough summary; only the trend across nu and t should be read, not the value.
 - One equation, one initial condition, three viscosities, one train/test split. No claim of generality beyond that.
 - POD is tested on interpolation in time (test snapshots between training snapshots), not on new viscosities or extrapolation.
 

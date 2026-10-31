@@ -92,6 +92,11 @@ def _modes_text(r, available):
     return str(r) if r is not None else f"> {available} (not reached)"
 
 
+def _sci(v):
+    """Short scientific notation, e.g. 9.18e-4."""
+    return f"{v:.2e}".replace("e-0", "e-").replace("e+0", "e+")
+
+
 def _strictly_increasing(values):
     return all(a < b for a, b in zip(values, values[1:]))
 
@@ -110,15 +115,16 @@ def check_predictions(summary):
                           f"slopes at t = {t_post:g} from largest to smallest nu: " + ", ".join(f"{s:.2f}" for s in slopes))
     rows = summary["pod"]["results"]  # largest nu first
     ranks = list(rows[0]["missing_energy_at_rank"])
-    failed = [f"{label} at rank {k}" for k in ranks for key, label in
-              (("missing_energy_at_rank", "missing energy"), ("normalized_s_at_rank", "s_r/s_1"))
-              if not _strictly_increasing([r[key][k] for r in rows])]
-    verdicts["P2"] = ("contradicted" if failed else "supported",
-                      ("not increasing as nu decreases: " + ", ".join(failed) + ". " if failed else "") +
-                      "at ranks " + ", ".join(ranks) + " (largest to smallest nu): missing energy " +
-                      "; ".join("/".join(f"{r['missing_energy_at_rank'][k]:.2e}" for k in ranks) for r in rows) +
-                      "; s_r/s_1 " +
-                      "; ".join("/".join(f"{r['normalized_s_at_rank'][k]:.2e}" for k in ranks) for r in rows))
+    failed, sentences = False, []
+    for key, label in (("normalized_s_at_rank", "s_r/s_1"), ("missing_energy_at_rank", "Missing energy")):
+        bad = [k for k in ranks if not _strictly_increasing([r[key][k] for r in rows])]
+        good = [k for k in ranks if k not in bad]
+        failed = failed or bool(bad)
+        sentences += [f"At rank {k}, {label} is " + ", ".join(_sci(r[key][k]) for r in rows) +
+                      " (largest to smallest nu), so not strictly increasing." for k in bad]
+        if good:
+            sentences.append(f"{label} at rank{'s' if len(good) > 1 else ''} {', '.join(good)} does increase.")
+    verdicts["P2"] = ("contradicted" if failed else "supported", " ".join(sentences))
     parts, status = [], "supported"
     for tol in summary["pod"]["tolerances"]:
         needed = [r["modes_needed"][str(tol)] for r in rows]
