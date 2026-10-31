@@ -10,3 +10,4 @@ Judgment calls made while building the study, one line each with the reason.
 - **Fallback solver.** A second-order finite-difference method-of-lines solver (`solve_fd`) is kept only as an independent cross-check at the largest nu (tolerance 1e-3 relative L2 on 513 points).
 - **Extra config keys.** `reference.dz`, `reference.log_cutoff`, `resolution.min_points_across_shock`, `pod.energy_ranks` and `spectrum.floor` were added so that no numerical constant is hard-coded.
 - **Seed.** Phase 1 contains no randomness; `seed` is stored in the config and summary for Phase 2.
+- **make on Windows.** No `make` binary on the author's Windows machine; the Makefile is verified with `mingw32-make` (GNU make). It sets `PYTHONPATH=src`, so the targets also work before `make install`.
