@@ -63,18 +63,21 @@ def _save(fig, path):
 def fig_error_vs_nu(summary, figs):
     groups = summary["groups"]
     variants = list(dict.fromkeys(g["variant"] for g in groups))
+    nus = sorted(summary["nu_list"], reverse=True)  # smooth case left, hard case right
     fig, ax = plt.subplots(figsize=(6, 4))
     for i, v in enumerate(variants):
         for g in (g for g in groups if g["variant"] == v):
             med, lo, hi = g["l2_near"]["median"], g["l2_near"]["ci_lo"], g["l2_near"]["ci_hi"]
             if not np.isfinite(med):
                 continue
-            x = g["nu"] * (1 + 0.04 * (i - len(variants) / 2))  # small offset so dots do not overlap
+            j = next(j for j, nu in enumerate(nus) if math.isclose(nu, g["nu"]))
+            x = j + 0.7 * ((i + 0.5) / len(variants) - 0.5)  # spread variants side by side within each nu
             yerr = [[med - lo], [hi - med]] if np.isfinite(lo) and np.isfinite(hi) else None
             ax.errorbar(x, med, yerr=yerr, fmt="o", ms=5, color=_color(v), label=_label(v), capsize=2)
-    ax.set_xscale("log")
+    ax.set_xticks(range(len(nus)), [_nu_tex(nu) for nu in nus])
+    ax.set_xlim(-0.5, len(nus) - 0.5)
     ax.set_yscale("log")
-    ax.set_xlabel("viscosity $\\nu$")
+    ax.set_xlabel("viscosity (sharper shock to the right)")
     ax.set_ylabel("near-shock relative $L^2$ error at $T$ (median, 95% CI)")
     _legend(ax)
     _save(fig, figs / "error_vs_nu.png")
@@ -132,6 +135,10 @@ def fig_training_curves(summary, figs):
     _save(fig, figs / "training_curves.png")
 
 
+METRIC_TEXT = {"l2_near": "near-shock rel. $L^2$", "l2_global": "global rel. $L^2$",
+               "err_share_high": "high-band error share"}
+
+
 def _fmt(v):
     return "-" if v is None or not np.isfinite(v) else f"{v:.3g}"
 
@@ -144,7 +151,7 @@ def readme_block(summary, fig_prefix):
     out = ["| Design choice | Prediction | Clause | Observed $\\rho$ (95% CI) | Verdict |", "|---|---|---|---|---|"]
     for r in rows:
         nu = "all $\\nu$" if r["nu"] == "all" else _nu_tex(r["nu"])
-        clause = f"{r['metric'].replace('_', ' ')}, {nu}, {r['direction'].replace('_', ' ')}"
+        clause = f"{METRIC_TEXT.get(r['metric'], r['metric'])}, {nu}, {r['direction'].replace('_', ' ')}"
         if r["threshold"] is not None:
             clause += f" {r['threshold']:g}"
         if r["id"] == "G0":
@@ -153,16 +160,16 @@ def readme_block(summary, fig_prefix):
             obs = f"{_fmt(r['value'])} [{_fmt(r['lo'])}, {_fmt(r['hi'])}]"
         out.append(f"| {DESIGN.get(r['variant'], r['variant'])} | {r['id']} | {clause} | {obs} | **{r['verdict']}** |")
     gate = summary["gate"]
+    figs = ["error_vs_nu.png", "training_curves.png"] + [f"{kind}_{_nu_file(nu)}.png" for nu in summary["nu_list"]
+                                                          for kind in ("spectra", "profiles")]
+    out += [""] + [f"![{name[:-4]}]({fig_prefix}figs/{name})" for name in figs] + [""]
+    for r in rows:
+        if r["verdict"] not in ("validated", "supported", "pass"):
+            out.append(f"- {r['id']} ({r['variant']}, {METRIC_TEXT.get(r['metric'], r['metric'])}): **{r['verdict']}**.")
     out += ["", f"Gate G0: **{'PASS' if gate['pass'] else 'FAIL'}**. Runs: {summary['n_runs']} "
             f"({summary['n_failed']} failed, counted as infinite error), plus {summary['n_lr_search_runs']} "
             f"learning-rate search runs; total compute {summary['cost_seconds'] / 3600:.2f} CPU-h."
-            + (" Some runs were started with --skip-gate." if summary["skip_gate_used"] else ""), "", SCOPE, ""]
-    figs = ["error_vs_nu.png", "training_curves.png"] + [f"{kind}_{_nu_file(nu)}.png" for nu in summary["nu_list"]
-                                                          for kind in ("spectra", "profiles")]
-    out += [f"![{name[:-4]}]({fig_prefix}figs/{name})" for name in figs] + [""]
-    weak = [r for r in rows if r["verdict"] not in ("validated", "supported", "pass")]
-    for r in weak:
-        out.append(f"- {r['id']} ({r['variant']}, {r['metric'].replace('_', ' ')}): **{r['verdict']}**.")
+            + (" Some runs were started with --skip-gate." if summary["skip_gate_used"] else ""), "", SCOPE]
     return "\n".join(out).rstrip()
 
 

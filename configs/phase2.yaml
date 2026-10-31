@@ -5,10 +5,10 @@ T: 1.0
 dtype: float64
 net: {depth: 4, width: 64, activation: tanh, init: glorot}
 train:
-  adam_steps: 5000
+  adam_steps: 3000          # chosen from `phase2 time` (see DECISIONS.md)
   lr_grid: [1.0e-3, 3.0e-4]
   lr_schedule: cosine
-  n_f: 4000                 # interior collocation points
+  n_f: 2000                 # interior collocation points (chosen from `phase2 time`)
   n_ic: 256                 # initial-condition points
   n_bc: 256                 # boundary points (half at x = -1, half at x = +1)
   n_val: 2000               # held-out interior points for lr selection (plus n_ic and n_bc held-out IC/BC points)

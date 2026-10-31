@@ -2,9 +2,11 @@ from pathlib import Path
 
 import pytest
 
-from burgers.pinn.config2 import load_phase2_config
-from burgers.pinn.models import param_count
-from burgers.pinn.variants import base_spec, build_spec, declared, expand, resolve
+pytest.importorskip("torch")
+
+from burgers.pinn.config2 import load_phase2_config  # noqa: E402
+from burgers.pinn.models import param_count  # noqa: E402
+from burgers.pinn.variants import base_spec, build_spec, declared, expand, resolve  # noqa: E402
 
 CFG = load_phase2_config(Path(__file__).resolve().parents[1] / "configs" / "phase2.yaml")
 MATCHED = ["V0", "V1a", "V1b", "V2", "V3", "V4", "V5", "V6", "relu"]
