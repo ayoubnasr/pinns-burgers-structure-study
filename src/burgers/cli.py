@@ -18,7 +18,7 @@ import numpy as np
 from burgers import io, plotting
 from burgers.config import load_config
 from burgers.data import build_snapshots, load_snapshots, save_snapshots, split_snapshots
-from burgers.pod import energy, modes_needed, pod_basis, projection_errors
+from burgers.pod import modes_needed, pod_basis, projection_errors
 from burgers.reference import points_across_shock
 from burgers.spectrum import fit_slope, fourier_amplitudes
 
@@ -68,12 +68,12 @@ def step_pod(cfg, run_dir):
         X_train, X_test = split_snapshots(X, cfg.split_scheme)
         U, s = pod_basis(X_train)
         svals[nu], errors[nu] = s, projection_errors(U, X_test)
-        e = energy(s)
         ranks = [r for r in cfg.pod_energy_ranks if r <= s.size]
         rows.append({
             "nu": nu, "n_train": X_train.shape[1], "n_test": X_test.shape[1], "n_modes_available": int(s.size),
             "modes_needed": {str(tol): modes_needed(U, X_test, tol) for tol in cfg.pod_tolerances},
-            "energy_at_rank": {str(r): float(e[r - 1]) for r in ranks},
+            # 1 - energy, summed directly from the tail so values near round-off are not lost to cancellation
+            "missing_energy_at_rank": {str(r): float(np.sum(s[r:] ** 2) / np.sum(s ** 2)) for r in ranks},
             "normalized_s_at_rank": {str(r): float(s[r - 1] / s[0]) for r in ranks},
         })
     plotting.plot_singular_values(run_dir, nus, svals)
@@ -109,13 +109,14 @@ def check_predictions(summary):
         verdicts["P1"] = ("supported" if ok else "contradicted",
                           f"slopes at t = {t_post:g} from largest to smallest nu: " + ", ".join(f"{s:.2f}" for s in slopes))
     rows = summary["pod"]["results"]  # largest nu first
-    ranks = list(rows[0]["energy_at_rank"])
-    ok = all(_strictly_increasing([-r["energy_at_rank"][k] for r in rows]) and
+    ranks = list(rows[0]["missing_energy_at_rank"])
+    ok = all(_strictly_increasing([r["missing_energy_at_rank"][k] for r in rows]) and
              _strictly_increasing([r["normalized_s_at_rank"][k] for r in rows]) for k in ranks)
     verdicts["P2"] = ("supported" if ok else "contradicted",
-                      "energy captured at ranks " + ", ".join(ranks) + ": " +
-                      "; ".join(_nu_text(r["nu"]) + " " + "/".join(f"{r['energy_at_rank'][k]:.6f}" for k in ranks)
-                                for r in rows))
+                      "at ranks " + ", ".join(ranks) + " (largest to smallest nu): missing energy " +
+                      "; ".join("/".join(f"{r['missing_energy_at_rank'][k]:.2e}" for k in ranks) for r in rows) +
+                      "; s_r/s_1 " +
+                      "; ".join("/".join(f"{r['normalized_s_at_rank'][k]:.2e}" for k in ranks) for r in rows))
     parts, status = [], "supported"
     for tol in summary["pod"]["tolerances"]:
         needed = [r["modes_needed"][str(tol)] for r in rows]
@@ -170,12 +171,12 @@ def results_markdown(summary, fig_prefix):
     out += [f"**POD.** Basis from {pod['results'][0]['n_train']} training snapshots, error measured on "
             f"{pod['results'][0]['n_test']} test snapshots ({pod['split']} split).", "",
             "| nu | " + " | ".join(f"modes for tol {tol:g}" for tol in tols) + " | " +
-            " | ".join(f"energy in {k} modes" for k in pod["results"][0]["energy_at_rank"]) + " |",
-            "|---|" + "---|" * (len(tols) + len(pod["results"][0]["energy_at_rank"]))]
+            " | ".join(f"missing energy, {k} modes" for k in pod["results"][0]["missing_energy_at_rank"]) + " |",
+            "|---|" + "---|" * (len(tols) + len(pod["results"][0]["missing_energy_at_rank"]))]
     for r in pod["results"]:
         out.append(f"| {_nu_text(r['nu'])} | " +
                    " | ".join(_modes_text(r["modes_needed"][str(tol)], r["n_modes_available"]) for tol in tols) + " | " +
-                   " | ".join(f"{v:.6f}" for v in r["energy_at_rank"].values()) + " |")
+                   " | ".join(f"{v:.2e}" for v in r["missing_energy_at_rank"].values()) + " |")
     out += ["", f"![Singular values]({fig_prefix}fig_singular_values.png)",
             f"![Modes vs error]({fig_prefix}fig_modes_vs_error.png)", "",
             "**Observed vs predicted** (predictions in [docs/PREDICTIONS.md](docs/PREDICTIONS.md), written before these results):", "",
