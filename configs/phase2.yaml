@@ -14,7 +14,7 @@ train:
   n_val: 2000               # held-out interior points for lr selection (plus n_ic and n_bc held-out IC/BC points)
   weights: {pde: 1.0, ic: 1.0, bc: 1.0}
   log_every: 100
-  divergence_bound: 1.0e6   # a training loss above this (or NaN) marks the run as failed
+  divergence_bound: 1.0e+6  # a training loss above this (or NaN) marks the run as failed
   target_loss: 1.0e-3       # "steps to reach a fixed training loss" uses this level
 seeds: [0, 1, 2, 3, 4]
 bootstrap: {n: 10000, seed: 12345, ci: 0.95}

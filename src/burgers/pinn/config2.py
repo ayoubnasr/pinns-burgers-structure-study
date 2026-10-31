@@ -47,6 +47,9 @@ def validate(cfg):
         _check(key in cfg, f"missing key '{key}'")
     tr = cfg["train"]
     _check(tr["adam_steps"] >= 1 and len(tr["lr_grid"]) >= 1, "need adam_steps >= 1 and a non-empty lr_grid")
+    numbers = [tr["divergence_bound"], tr["target_loss"], *tr["lr_grid"]]
+    _check(all(isinstance(v, (int, float)) for v in numbers),
+           "numeric train values must be numbers (YAML reads 1.0e6 as text; write 1.0e+6)")
     _check(tr["lr_schedule"] == "cosine", "only the cosine schedule is implemented")
     _check(cfg["dtype"] == "float64", "only float64 is supported")
     _check(len(cfg["seeds"]) >= 1 and all(nu > 0 for nu in cfg["nu_list"]), "need seeds and positive viscosities")
