@@ -45,14 +45,28 @@ Phase 2 (planned, not yet implemented) compares a standard PINN with a variant w
 architecture is chosen from the PDE's structure, and checks where in the spectrum each one
 fails. The question this repository answers first is whether the premise is true at all.
 
+## What these results suggest for the architecture
 
-## 1. Question
+This repository is the first case in a larger effort: deriving architecture choices for a neural PDE
+solver from an analysis of the PDE, before any training. The measurements above are the analysis.
+The rules below are **hypotheses they motivate, not results**; Phase 2 is designed to test them.
 
-How does the structure of a PDE shape a learning method? As a first step, this repo tests the premise on
-Burgers' equation: when viscosity drops and a shock forms, the solution should become harder to represent,
-seen as slower Fourier decay and slower POD singular-value decay. That premise matters because, if it holds,
-methods that build a solution from smooth or global pieces (Fourier modes, linear bases) need more of those
-pieces as the front sharpens, and the same question can then be asked of neural networks in a later phase.
+| Design choice | What the Burgers analysis says | Proposed rule (hypothesis) |
+|---|---|---|
+| **Input encoding** | The spectrum stays near $1/k$ out to roughly $k \sim 1/\nu$, and a network with spectral bias learns that content last. | Frequencies in the encoding should reach about $1/\nu$, spaced across scales, so the encoding range is set from the PDE instead of tuned by trial and error. |
+| **Coordinates** | The shock layer is about $\nu$ wide, so the sharp feature lives on a length scale that shrinks with $\nu$. | Also feed the network a stretched coordinate $\xi = x/\nu$, so the front has width of order one in the variable the network sees. |
+| **Activation** | The residual loss needs $u_{xx}$, and ReLU's second derivative is zero. The stationary viscous shock profile is exactly $-a\tanh\!\big(ax/(2\nu)\big)$. | Use a smooth, saturating activation such as $\tanh$, which can represent the front's shape directly, with some first-layer weights initialized at scale $\sim 1/\nu$. |
+| **Spatial vs. spectral representation** | A single front is dense in frequency ($1/k$) but sparse in space, and POD needs more global modes as $\nu$ drops. | Prefer a few localized steep units for the front over many global Fourier components. |
+| **Latent dimension** (operator-style models) | POD needs 4, 6, 7 modes at tolerance $10^{-3}$ as $\nu$ decreases. | Size the bottleneck from the POD mode count for the target tolerance, and let it grow as $\nu$ drops. |
+| **Hard constraints** | The solution stays odd about $x = 0$ and vanishes at $x = \pm 1$. | Build $u(-x,t) = -u(x,t)$ and the boundary conditions into the architecture instead of penalizing them in the loss. |
+| **Width and depth** | Not determined. One front needs only a few steep units, and the analysis does not say how wide or deep the smooth part must be. | No rule proposed. Treat these as ablations in Phase 2, not as claims. |
+| **Training around it** | The difficult content is concentrated near the shock and gets harder as $\nu$ drops. | Start at larger $\nu$ and decrease it step by step, and place residual points densely near the shock. |
+
+**How this will be tested.** Phase 2 trains a baseline PINN and one variant that changes a single
+row above (the input encoding, sized from the measured spectrum), then compares where in the
+spectrum each one's error sits. The control is the smooth case $\nu = 0.1/\pi$, where the baseline
+is expected to do fine. If the variant doesn't help at the wavenumbers where the baseline fails,
+that rule is wrong.
 
 ## 2. Hypothesis and predictions
 
