@@ -1,0 +1,4 @@
+# Phase 2 stub (not used yet): Fourier-feature PINN with the same budget as the baseline.
+nu: 0.00318309886
+model: {width: 20, depth: 8, fourier_features: null, fourier_scale: null}
+train: {adam_iters: null, lbfgs_iters: null, seeds: [0, 1, 2]}

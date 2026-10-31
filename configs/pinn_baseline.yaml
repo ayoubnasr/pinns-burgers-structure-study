@@ -1,0 +1,4 @@
+# Phase 2 stub (not used yet): baseline tanh MLP PINN.
+nu: 0.00318309886
+model: {width: 20, depth: 8, fourier_features: 0}
+train: {adam_iters: null, lbfgs_iters: null, seeds: [0, 1, 2]}
