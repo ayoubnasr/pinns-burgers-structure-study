@@ -1,7 +1,7 @@
 # Burgers structure study
 
-> **Note:** This repo replaces an earlier version of this project, whose repository is now private.
-> It is a clean rebuild: the code, tests and results here were written and generated from scratch in this repo.
+> **Note:** This repo replaces an earlier version of this project (pinns-burgers-benchmarks), whose repository is now private.
+> Some of the code was moved from the earlier version. However, tests and results here were written and generated from scratch in this repo.
 
 ## 1. Question
 
