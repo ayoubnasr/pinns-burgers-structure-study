@@ -1,5 +1,8 @@
 # Burgers structure study
 
+> **Note:** This repo replaces an earlier version of this project, whose repository is now private.
+> It is a clean rebuild: the code, tests and results here were written and generated from scratch in this repo.
+
 ## 1. Question
 
 How does the structure of a PDE shape a learning method? As a first step, this repo tests the premise on
