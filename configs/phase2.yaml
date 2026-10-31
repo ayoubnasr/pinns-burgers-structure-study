@@ -1,0 +1,71 @@
+# Phase 2 configuration. The design and predictions are pre-registered in docs/PHASE2.md;
+# thresholds below are copied from it and checked against it by `aggregate`.
+nu_list: [0.1/pi, 0.01/pi, 0.001/pi]   # same values as Phase 1
+T: 1.0
+dtype: float64
+net: {depth: 4, width: 64, activation: tanh, init: glorot}
+train:
+  adam_steps: 5000
+  lr_grid: [1.0e-3, 3.0e-4]
+  lr_schedule: cosine
+  n_f: 4000                 # interior collocation points
+  n_ic: 256                 # initial-condition points
+  n_bc: 256                 # boundary points (half at x = -1, half at x = +1)
+  n_val: 2000               # held-out interior points for lr selection (plus n_ic and n_bc held-out IC/BC points)
+  weights: {pde: 1.0, ic: 1.0, bc: 1.0}
+  log_every: 100
+  divergence_bound: 1.0e6   # a training loss above this (or NaN) marks the run as failed
+  target_loss: 1.0e-3       # "steps to reach a fixed training loss" uses this level
+seeds: [0, 1, 2, 3, 4]
+bootstrap: {n: 10000, seed: 12345, ci: 0.95}
+eval:
+  nx: 8193                  # Phase 1 grid: resolves the smallest-nu shock (see DECISIONS.md)
+  coarse: {nx: 129, nt: 21} # coarse space-time grid for the space-time relative L2
+  near_shock: {halfwidth_factor: 10, min_points: 8}
+  bands: {low: [0, 0.1], mid: [0.1, 0.4], high: [0.4, 1.0]}   # fractions of the resolved wavenumber range
+  fit_k_range: [10, 100]    # same slope-fit window and floor as Phase 1
+  floor: 1.0e-12
+variants:
+  V0: {}
+  V1a: {fourier: {m: 16, c: 1.0}}
+  V1b: {fourier: {m: 16, c: 0.1}}
+  V2: {stretched: true}
+  V3: {hard: true}
+  V4: {front: {a_init: 0.1, front_b_init_factor: 1.0}}
+  V5: {steep: {steep_fraction: 0.25, c: 1.0}}
+  V6: {continuation: {stages: 3}, near_shock_fraction: 0.5}
+  V7: {sweep: {width: [32, 64, 128], depth: [2, 4, 6]}}
+  relu: {activation: relu}
+  combined: {combine: auto} # "auto" = variants whose Tier A/B predictions are validated (resolved by aggregate)
+  pod_latent: {}            # underspecified in docs/PHASE2.md; stub only
+predictions:
+  G0:
+    - {variant: V0, nu: 0.001/pi, metric: l2_near, threshold: 0.10, direction: above}
+    - {variant: V0, nu: 0.1/pi, metric: l2_global, threshold: 0.01, direction: below}
+  H1:
+    - {variant: V0, nu: all, metric: err_share_high, threshold: null, direction: increases_as_nu_decreases}
+  H2:
+    - {variant: V1a, nu: 0.001/pi, metric: l2_near, threshold: 0.7, direction: below}
+    - {variant: V1b, nu: 0.001/pi, metric: l2_near, threshold: null, direction: less_gain_than, other: V1a}
+  H3:
+    - {variant: V2, nu: 0.001/pi, metric: l2_near, threshold: 0.7, direction: below}
+    - {variant: V2, nu: 0.1/pi, metric: l2_near, threshold: null, direction: no_effect}
+  H4:
+    - {variant: V3, nu: 0.1/pi, metric: l2_global, threshold: 0.8, direction: below}
+    - {variant: V3, nu: 0.01/pi, metric: l2_global, threshold: 0.8, direction: below}
+    - {variant: V3, nu: 0.001/pi, metric: l2_global, threshold: 0.8, direction: below}
+  H5:
+    - {variant: V4, nu: 0.001/pi, metric: l2_near, threshold: 0.7, direction: below}
+  H6:
+    - {variant: V5, nu: 0.001/pi, metric: l2_near, threshold: 0.8, direction: below}
+  H7:
+    - {variant: V6, nu: 0.001/pi, metric: l2_near, threshold: 0.8, direction: below}
+  H8:
+    - {variant: V1a, nu: all, metric: l2_near, threshold: null, direction: smaller_gain_at_smooth}
+    - {variant: V2, nu: all, metric: l2_near, threshold: null, direction: smaller_gain_at_smooth}
+    - {variant: V4, nu: all, metric: l2_near, threshold: null, direction: smaller_gain_at_smooth}
+tiers:
+  A: [V0, V1a, V1b, V2, V3]
+  B: [V4, V5, V6, V7, relu]
+  C: [combined, pod_latent]
+output: {root: results/phase2}
