@@ -1,0 +1,11 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+build/
+dist/
+.venv/
+venv/
+# large generated arrays and logs; figures, tables and summary.json are committed
+results/**/*.npz
+results/*.log

@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "burgers-structure-study"
+version = "0.1.0"
+description = "How the structure of Burgers' equation (shock formation) affects Fourier and POD representability."
+readme = "README.md"
+requires-python = ">=3.9"
+authors = [{name = "Ayoub Nasr", email = "ayoubnasrsmain@gmail.com"}]
+dependencies = ["numpy", "scipy", "matplotlib", "pyyaml", "pytest"]
+
+[project.optional-dependencies]
+pinn = ["torch"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
