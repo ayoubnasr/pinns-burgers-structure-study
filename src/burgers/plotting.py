@@ -52,7 +52,7 @@ def plot_spectrum(run_dir, nu_list, times, spectra, fits, k_range):
                 ax.loglog(kk, 10 ** f["intercept"] * kk ** f["slope"], color="black", linewidth=0.8)
         ax.axvspan(*k_range, color="#eeeeee", zorder=0)
         ax.set_title(f"t = {t:g}")
-        ax.set_xlabel("mode number k (wavenumber πk, dimensionless)")
+        ax.set_xlabel("mode number k (wavenumber πk)")
     axes[0].set_ylabel("|û_k| (dimensionless)")
     axes[0].legend(title="black: log-log fit in shaded window", title_fontsize=7)
     _save(fig, run_dir, "fig_spectrum")

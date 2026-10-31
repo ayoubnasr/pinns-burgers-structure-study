@@ -110,9 +110,11 @@ def check_predictions(summary):
                           f"slopes at t = {t_post:g} from largest to smallest nu: " + ", ".join(f"{s:.2f}" for s in slopes))
     rows = summary["pod"]["results"]  # largest nu first
     ranks = list(rows[0]["missing_energy_at_rank"])
-    ok = all(_strictly_increasing([r["missing_energy_at_rank"][k] for r in rows]) and
-             _strictly_increasing([r["normalized_s_at_rank"][k] for r in rows]) for k in ranks)
-    verdicts["P2"] = ("supported" if ok else "contradicted",
+    failed = [f"{label} at rank {k}" for k in ranks for key, label in
+              (("missing_energy_at_rank", "missing energy"), ("normalized_s_at_rank", "s_r/s_1"))
+              if not _strictly_increasing([r[key][k] for r in rows])]
+    verdicts["P2"] = ("contradicted" if failed else "supported",
+                      ("not increasing as nu decreases: " + ", ".join(failed) + ". " if failed else "") +
                       "at ranks " + ", ".join(ranks) + " (largest to smallest nu): missing energy " +
                       "; ".join("/".join(f"{r['missing_energy_at_rank'][k]:.2e}" for k in ranks) for r in rows) +
                       "; s_r/s_1 " +
