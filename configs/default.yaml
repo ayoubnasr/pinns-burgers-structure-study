@@ -2,14 +2,14 @@ problem:
   x_min: -1.0
   x_max: 1.0
   t_max: 1.0
-  nx: 2048
+  nx: 8193                  # 8192 periodic points; 2048 fails the shock-resolution check (see DECISIONS.md)
   nt: 201
   nu_list: [0.0318309886, 0.00318309886, 0.000318309886]   # 0.1/pi, 0.01/pi, 0.001/pi
 seed: 0
 split:
   scheme: interleaved       # train = even-index snapshots, test = odd-index
 reference:
-  dz: 0.05                  # step of the scaled Hopf-Cole quadrature variable z (integrand width is >= ~0.3)
+  dz: 0.15                  # step of the scaled Hopf-Cole quadrature variable z (error ~exp(-pi^2/(dz^2 (pi t+1))))
   log_cutoff: 50.0          # drop quadrature tail where the integrand is below exp(-log_cutoff) of its peak
 resolution:
   min_points_across_shock: 5
