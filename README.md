@@ -3,6 +3,49 @@
 > **Note:** This repo replaces an earlier version of this project (pinns-burgers-benchmarks), whose repository is now private.
 > Some of the code was moved from the earlier version. However, tests and results here were written and generated from scratch in this repo.
 
+
+## Why this project
+
+My broader question is how the structure of a physical model shapes a learning method. One
+argument for why it should matter: neural networks tend to fit smooth, low-frequency structure first
+and sharp detail last (spectral bias), so a PDE whose solution develops a shock should be hard
+for a standard network. That argument rests on a premise that can be tested without any network:
+
+> **Does a sharper shock make the solution harder to represent?**
+
+This repository tests that premise on Burgers' equation $u_t + u\,u_x = \nu\,u_{xx}$ with
+$u(x,0) = -\sin(\pi x)$, at three viscosities $\nu \in \{0.1/\pi,\ 0.01/\pi,\ 0.001/\pi\}$.
+Lower $\nu$ means a sharper shock. "Harder to represent" is measured two ways: how much
+high-frequency content the solution has (Fourier spectrum), and how many fixed patterns a linear
+basis needs to rebuild the solution family (POD). The predictions were written and tagged before
+any analysis was run (see [docs/PREDICTIONS.md](docs/PREDICTIONS.md)).
+
+## Summary of results
+
+**Yes, the premise holds, with caveats.**
+
+- **Fourier (P1, supported).** The spectrum flattens as $\nu$ decreases. At $\nu = 0.001/\pi$ the
+  fitted log-log slope is about $-1$, the signature of a jump. At $\nu = 0.01/\pi$ it is about $-2$
+  at $T = 1$, and at $\nu = 0.1/\pi$ it is far steeper, since the solution is smooth.
+- **POD singular values (P2, marked contradicted).** Singular values decay more slowly at lower
+  $\nu$, as predicted, but the curves cross by a small margin at one rank, which fails the strict check.
+- **Modes needed (P3, marked contradicted).** At tolerance $10^{-3}$ the mode count rises strictly
+  with sharper shocks (4, 6, 7). At $10^{-2}$ two cases tie (3, 4, 4), and ties count as failing.
+
+Two of the three predictions hold as trends and fail my strict criteria at a few points. The
+mode counts are small, so exact rankings are fragile. Details are in the tables below.
+
+**What this does not show.** Nothing here tests a neural network. It supports the premise
+behind the spectral-bias argument; it does not show that a PINN fails on shocks or that a
+structure-aware architecture helps.
+
+## Where this leads
+
+Phase 2 (planned, not yet implemented) compares a standard PINN with a variant whose
+architecture is chosen from the PDE's structure, and checks where in the spectrum each one
+fails. The question this repository answers first is whether the premise is true at all.
+
+
 ## 1. Question
 
 How does the structure of a PDE shape a learning method? As a first step, this repo tests the premise on
