@@ -62,9 +62,8 @@ def validate(cfg):
     for pid, clauses in cfg["predictions"].items():
         for c in clauses:
             _check(c["variant"] in cfg["variants"], f"{pid} uses unknown variant '{c['variant']}'")
+            # a prediction's nu may be absent from a reduced (smoke/test) nu_list; it is then reported "not run"
             _check(c["direction"] in KNOWN_DIRECTIONS, f"{pid} has unknown direction '{c['direction']}'")
-            _check(c["nu"] == "all" or any(math.isclose(c["nu"], nu) for nu in cfg["nu_list"]),
-                   f"{pid} uses a nu that is not in nu_list")
     cfg["hash"] = config_hash(cfg)
     return cfg
 

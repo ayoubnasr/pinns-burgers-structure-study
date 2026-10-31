@@ -9,3 +9,7 @@ venv/
 # large generated arrays and logs; figures, tables and summary.json are committed
 results/**/*.npz
 results/*.log
+# Phase 2: per-run outputs and logs are never committed
+results/phase2/runs/
+results/phase2/lr_search/
+results/phase2/*.log

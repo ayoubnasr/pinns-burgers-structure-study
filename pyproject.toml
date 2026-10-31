@@ -12,7 +12,7 @@ authors = [{name = "Ayoub Nasr", email = "ayoubnasrsmain@gmail.com"}]
 dependencies = ["numpy", "scipy", "matplotlib", "pyyaml", "pytest"]
 
 [project.optional-dependencies]
-pinn = ["torch"]
+phase2 = ["torch"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
